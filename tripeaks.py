@@ -76,16 +76,16 @@ class Tableau:
 
 class Game:
     def __init__(self, seq, pile):
-        self.tableau = Tableau(seq)
-        self.pile = deque([Card(card) for card in pile])
-        self.waste = deque([self.pile.pop(0)])
-        self.branches = deque()
-
-    def __repr__(self):
-        return [card.readable for card in self.pile]
+        waste = deque([pile.pop(0)])
+        self.branches = deque([Branch(Tableau(seq), pile, waste)])
 
     def play(self):
-        pass
+        while self.branches:
+            branch = self.branches.popleft()
+            top_card = branch.waste[0]
+            for parent, children in branch.tableau.items():
+                if not children and top_card.match(parent):
+                    pass
 
 
 class Branch:
@@ -94,12 +94,17 @@ class Branch:
         self.pile = deepcopy(pile)
         self.waste = deepcopy(waste)
 
+    def move(self, card):
+        self.tableau.drop_card(card)
+        self.waste.appendleft(card)
+
 
 if __name__ == '__main__':
     example_seq = ['3h', '3d', '4d',
                    '6c', 'Ks', '8h', 'Ah', '8d', '7c',
                    'Qh', '10c', '7d', '5d', 'Jh', '9s', '4s', 'Kh', '3s',
                    '10s', '2d', 'Qs', '6h', 'Jd', '9h', 'As', '4c', '7h', '8s']
-    t = Tableau(example_seq)
-    for c in t:
-        print(c)
+    example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Ac', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
+                    'Qd', '10h', 'Kc', 'Ad', '3c', '2h', '5h', '7s']
+    # t = Tableau(example_seq)
+    game = Game(example_seq, example_seq)

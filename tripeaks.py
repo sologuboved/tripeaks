@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 from collections import deque
 
 
@@ -48,6 +48,12 @@ class Tableau:
                                         ", ".join(sorted([child.readable for child in self.tableau[parent]])))
         return string
 
+    def __len__(self):
+        return len(self.tableau)
+
+    def items(self):
+        return self.tableau.items()
+
     @staticmethod
     def fill_in(seq):
         seq = [Card(card) for card in seq]
@@ -76,27 +82,50 @@ class Tableau:
 
 class Game:
     def __init__(self, seq, pile):
-        waste = deque([pile.pop(0)])
-        self.branches = deque([Branch(Tableau(seq), pile, waste)])
+        self.count = 0
+        pile = deque([Card(card) for card in pile])
+        waste = deque([pile.popleft()])
+        self.branches = deque([Branch(Tableau(seq), deque(pile), waste, list())])
+        self.paths = list()
 
     def play(self):
-        while self.branches:
+        while self.branches and self.count < 10000000:
+            print(self.count, len(self.branches))
+            self.count += 1
             branch = self.branches.popleft()
+            print(branch.path, len(branch.tableau))
             top_card = branch.waste[0]
+            if not branch.tableau:
+                print('Won!')
+                quit()
             for parent, children in branch.tableau.items():
                 if not children and top_card.match(parent):
-                    pass
+                    self.branches.append(branch.move(parent))
+            if branch.pile:
+                self.branches.append(branch.move(None))
 
 
 class Branch:
-    def __init__(self, tableau, pile, waste):
-        self.tableau = deepcopy(tableau)
-        self.pile = deepcopy(pile)
-        self.waste = deepcopy(waste)
+    def __init__(self, tableau, pile, waste, path):
+        self.tableau = tableau
+        self.pile = pile
+        self.waste = waste
+        self.path = path
 
     def move(self, card):
-        self.tableau.drop_card(card)
-        self.waste.appendleft(card)
+        tableau = deepcopy(self.tableau)
+        pile = copy(self.pile)
+        waste = copy(self.waste)
+        path = copy(self.path)
+        if card:
+            tableau.drop_card(card)
+            waste.appendleft(card)
+            path.append(card)
+        else:
+            top_card = pile.popleft()
+            waste.appendleft(top_card)
+            path.append(('m', top_card))
+        return Branch(tableau, pile, waste, path)
 
 
 if __name__ == '__main__':
@@ -107,4 +136,5 @@ if __name__ == '__main__':
     example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Ac', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
                     'Qd', '10h', 'Kc', 'Ad', '3c', '2h', '5h', '7s']
     # t = Tableau(example_seq)
-    game = Game(example_seq, example_seq)
+    game = Game(example_seq, example_pile)
+    game.play()

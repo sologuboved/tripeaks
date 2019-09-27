@@ -69,8 +69,7 @@ class Tableau:
                    seq[5]: [seq[12], seq[13]],
                    seq[6]: [seq[13], seq[14]],
                    seq[7]: [seq[15], seq[16]],
-                   seq[8]: [seq[16], seq[17]]
-                   }
+                   seq[8]: [seq[16], seq[17]]}
         for indx in range(9, 18):
             tableau[seq[indx]] = {seq[indx + 9], seq[indx + 10]}
         for indx in range(18, 28):

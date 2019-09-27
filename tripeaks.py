@@ -98,10 +98,7 @@ class Game:
             self.count += 1
             branch = self.branches.popleft()
             tableau, pile, top_card, path = branch.follow_path(self.tableau, self.pile)
-            print("({}) {} branches, {}-long tableau, playing path {}".format(self.count,
-                                                                              len(self.branches),
-                                                                              len(tableau),
-                                                                              path))
+            print("({}) {} branches, {} cards, path {}".format(self.count, len(self.branches), len(tableau), path))
             if not tableau:
                 print('Won!')
                 return

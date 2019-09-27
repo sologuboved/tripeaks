@@ -4,7 +4,6 @@ from collections import deque
 
 
 def which_watch(func):
-
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
@@ -53,7 +52,7 @@ class Tableau:
         for parent in self.tableau:
             yield parent
 
-    def __str__(self):
+    def __repr__(self):
         string = str()
         for parent in sorted(self.tableau.keys()):
             string += "{}: {}\n".format(parent.readable,
@@ -95,50 +94,77 @@ class Tableau:
 class Game:
     def __init__(self, seq, pile):
         self.count = 0
-        pile = deque([Card(card) for card in pile])
-        waste = deque([pile.popleft()])
-        self.branches = deque([Branch(Tableau(seq), deque(pile), waste, list())])
+        self.tableau = Tableau(seq)
+        self.pile = deque([Card(card) for card in pile])
+        self.branches = deque([Branch(list())])
         self.paths = list()
 
     @which_watch
     def play(self):
-        while self.branches and self.count < 10000000:
-            print(self.count, len(self.branches))
+        while self.branches:
+            # print('count:', self.count, len(self.branches))
             self.count += 1
             branch = self.branches.popleft()
-            print(branch.path, len(branch.tableau))
-            top_card = branch.waste[0]
-            if not branch.tableau:
+            tableau, pile, waste, path = branch.follow_path(self.tableau, self.pile)
+            print("({}) {} branches, {}-long tableau, playing path {}".format(self.count,
+                                                                              len(self.branches),
+                                                                              len(tableau),
+                                                                              path))
+            if not tableau:
                 print('Won!')
-                quit()
-            for parent, children in branch.tableau.items():
+                return
+            try:
+                top_card = waste[0]
+            except IndexError:
+                top_card = pile.popleft()
+                waste.appendleft(top_card)
+            for parent, children in tableau.items():
                 if not children and top_card.match(parent):
-                    self.branches.append(branch.move(parent))
-            if branch.pile:
-                self.branches.append(branch.move(None))
+                    self.branches.append(Branch(path[:] + [parent]))
+            if pile:
+                self.branches.append(Branch(path[:] + ['f']))
+            # print('BRANCHES:', self.branches)
+        print('Lost!')
 
 
 class Branch:
-    def __init__(self, tableau, pile, waste, path):
-        self.tableau = tableau
-        self.pile = pile
-        self.waste = waste
+    def __init__(self, path):
         self.path = path
+        # print('pathiepath', path)
 
-    def move(self, card):
-        tableau = deepcopy(self.tableau)
-        pile = copy(self.pile)
-        waste = copy(self.waste)
-        path = copy(self.path)
+    def __repr__(self):
+        string = str()
+        for card in self.path:
+            if isinstance(card, Card):
+                string += card.readable + " ~ "
+            else:
+                string += "flip ~ "
+        try:
+            return string[: -3]
+        except IndexError:
+            return string
+
+    def follow_path(self, tableau, pile):
+        # print("Following path:", self.path)
+        tableau = deepcopy(tableau)
+        pile = copy(pile)
+        waste = deque()
+        for step in self.path:
+            # print(step, '~', pile)
+            if isinstance(step, Card):
+                self.move(tableau, pile, waste, step)
+            else:
+                self.move(tableau, pile, waste, None)
+        return tableau, pile, waste, self.path
+
+    @staticmethod
+    def move(tableau, pile, waste, card):
         if card:
             tableau.drop_card(card)
             waste.appendleft(card)
-            path.append(card)
         else:
             top_card = pile.popleft()
             waste.appendleft(top_card)
-            path.append(('m', top_card))
-        return Branch(tableau, pile, waste, path)
 
 
 if __name__ == '__main__':

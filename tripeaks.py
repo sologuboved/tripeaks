@@ -1,5 +1,17 @@
+import time
 from copy import copy, deepcopy
 from collections import deque
+
+
+def which_watch(func):
+
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print("\n{} took {}\n".format(func.__name__, time.strftime("%H:%M:%S", time.gmtime(time.time() - start))))
+        return result
+
+    return wrapper
 
 
 class Card:
@@ -88,6 +100,7 @@ class Game:
         self.branches = deque([Branch(Tableau(seq), deque(pile), waste, list())])
         self.paths = list()
 
+    @which_watch
     def play(self):
         while self.branches and self.count < 10000000:
             print(self.count, len(self.branches))

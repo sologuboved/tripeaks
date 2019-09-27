@@ -95,7 +95,7 @@ class Game:
     def __init__(self, seq, pile):
         self.count = 0
         self.tableau = Tableau(seq)
-        self.pile = deque([Card(card) for card in pile])
+        self.pile = [Card(card) for card in pile]
         self.branches = deque([Branch(list())])
         self.paths = list()
 
@@ -105,24 +105,25 @@ class Game:
             # print('count:', self.count, len(self.branches))
             self.count += 1
             branch = self.branches.popleft()
-            tableau, pile, waste, path = branch.follow_path(self.tableau, self.pile)
-            print("({}) {} branches, {}-long tableau, playing path {}".format(self.count,
-                                                                              len(self.branches),
-                                                                              len(tableau),
-                                                                              path))
+            tableau, pile, top_card, path = branch.follow_path(self.tableau, self.pile)
+            print("({}) {} branches, {}-long tableau, playing path {}; card {}".format(self.count,
+                                                                                       len(self.branches),
+                                                                                       len(tableau),
+                                                                                       path,
+                                                                                       top_card))
             if not tableau:
                 print('Won!')
                 return
-            try:
-                top_card = waste[0]
-            except IndexError:
-                top_card = pile.popleft()
-                waste.appendleft(top_card)
+            dropped = False
             for parent, children in tableau.items():
                 if not children and top_card.match(parent):
-                    self.branches.append(Branch(path[:] + [parent]))
+                    self.branches.appendleft(Branch(path[:] + [parent]))
+                    dropped = True
             if pile:
-                self.branches.append(Branch(path[:] + ['f']))
+                if dropped:
+                    self.branches.append(Branch(path[:] + ['f ' + pile[0].readable]))
+                else:
+                    self.branches.appendleft(Branch(path[:] + ['f ' + pile[0].readable]))
             # print('BRANCHES:', self.branches)
         print('Lost!')
 
@@ -148,23 +149,16 @@ class Branch:
         # print("Following path:", self.path)
         tableau = deepcopy(tableau)
         pile = copy(pile)
-        waste = deque()
+        top_card = pile.pop(0)
         for step in self.path:
             # print(step, '~', pile)
             if isinstance(step, Card):
-                self.move(tableau, pile, waste, step)
+                tableau.drop_card(step)
+                top_card = step
             else:
-                self.move(tableau, pile, waste, None)
-        return tableau, pile, waste, self.path
-
-    @staticmethod
-    def move(tableau, pile, waste, card):
-        if card:
-            tableau.drop_card(card)
-            waste.appendleft(card)
-        else:
-            top_card = pile.popleft()
-            waste.appendleft(top_card)
+                top_card = pile.pop(0)
+        print(pile[: 5], top_card)
+        return tableau, pile, top_card, self.path
 
 
 if __name__ == '__main__':
@@ -172,7 +166,7 @@ if __name__ == '__main__':
                    '6c', 'Ks', '8h', 'Ah', '8d', '7c',
                    'Qh', '10c', '7d', '5d', 'Jh', '9s', '4s', 'Kh', '3s',
                    '10s', '2d', 'Qs', '6h', 'Jd', '9h', 'As', '4c', '7h', '8s']
-    example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Ac', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
+    example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Jc', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
                     'Qd', '10h', 'Kc', 'Ad', '3c', '2h', '5h', '7s']
     # t = Tableau(example_seq)
     game = Game(example_seq, example_pile)

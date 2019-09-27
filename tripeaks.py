@@ -52,13 +52,6 @@ class Tableau:
         for parent in self.tableau:
             yield parent
 
-    def __repr__(self):
-        string = str()
-        for parent in sorted(self.tableau.keys()):
-            string += "{}: {}\n".format(parent.readable,
-                                        ", ".join(sorted([child.readable for child in self.tableau[parent]])))
-        return string
-
     def __len__(self):
         return len(self.tableau)
 
@@ -102,15 +95,13 @@ class Game:
     @which_watch
     def play(self):
         while self.branches:
-            # print('count:', self.count, len(self.branches))
             self.count += 1
             branch = self.branches.popleft()
             tableau, pile, top_card, path = branch.follow_path(self.tableau, self.pile)
-            print("({}) {} branches, {}-long tableau, playing path {}; card {}".format(self.count,
-                                                                                       len(self.branches),
-                                                                                       len(tableau),
-                                                                                       path,
-                                                                                       top_card))
+            print("({}) {} branches, {}-long tableau, playing path {}".format(self.count,
+                                                                              len(self.branches),
+                                                                              len(tableau),
+                                                                              path))
             if not tableau:
                 print('Won!')
                 return
@@ -124,50 +115,38 @@ class Game:
                     self.branches.append(Branch(path[:] + ['f ' + pile[0].readable]))
                 else:
                     self.branches.appendleft(Branch(path[:] + ['f ' + pile[0].readable]))
-            # print('BRANCHES:', self.branches)
         print('Lost!')
 
 
 class Branch:
     def __init__(self, path):
         self.path = path
-        # print('pathiepath', path)
-
-    def __repr__(self):
-        string = str()
-        for card in self.path:
-            if isinstance(card, Card):
-                string += card.readable + " ~ "
-            else:
-                string += "flip ~ "
-        try:
-            return string[: -3]
-        except IndexError:
-            return string
 
     def follow_path(self, tableau, pile):
-        # print("Following path:", self.path)
         tableau = deepcopy(tableau)
         pile = copy(pile)
         top_card = pile.pop(0)
         for step in self.path:
-            # print(step, '~', pile)
             if isinstance(step, Card):
                 tableau.drop_card(step)
                 top_card = step
             else:
                 top_card = pile.pop(0)
-        print(pile[: 5], top_card)
         return tableau, pile, top_card, self.path
 
 
 if __name__ == '__main__':
+    # example_seq = ['3h', '3d', '4d',
+    #                '6c', 'Ks', '8h', 'Ah', '8d', '7c',
+    #                'Qh', '10c', '7d', '5d', 'Jh', '9s', '4s', 'Kh', '3s',
+    #                '10s', '2d', 'Qs', '6h', 'Jd', '9h', 'As', '4c', '7h', '8s']
+    # example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Jc', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
+    #                 'Qd', '10h', 'Kc', 'Ad', '3c', '2h', '5h', '7s']
     example_seq = ['3h', '3d', '4d',
                    '6c', 'Ks', '8h', 'Ah', '8d', '7c',
                    'Qh', '10c', '7d', '5d', 'Jh', '9s', '4s', 'Kh', '3s',
                    '10s', '2d', 'Qs', '6h', 'Jd', '9h', 'As', '4c', '7h', '8s']
     example_pile = ['Kd', '2c', 'Ac', 'Qc', 'Js', '6s', '9d', '6d', 'Jc', '8c', '10d', '9c', '5c', '4h', '5s', '2s',
                     'Qd', '10h', 'Kc', 'Ad', '3c', '2h', '5h', '7s']
-    # t = Tableau(example_seq)
     game = Game(example_seq, example_pile)
     game.play()

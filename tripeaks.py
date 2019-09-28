@@ -23,9 +23,6 @@ class Card:
     def __eq__(self, other):
         return self.readable == other.readable
 
-    def __lt__(self, other):
-        return self.readable < other.readable
-
     def __repr__(self):
         return "Card('{}')".format(self.readable)
 

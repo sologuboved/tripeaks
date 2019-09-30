@@ -9,9 +9,8 @@ def generate_hands(num):
     ]
     for n in range(num):
         print('#' + str(n))
-        if n > 30:
-            random.shuffle(hand)
-            yield hand[: 24], hand[24:]
+        random.shuffle(hand)
+        yield hand[: 24], hand[24:]
 
 
 @which_watch
@@ -28,5 +27,5 @@ def experiment(num):
 
 
 if __name__ == '__main__':
-    random.seed(0)
-    experiment(50)
+    random.seed(1)
+    experiment(100)
